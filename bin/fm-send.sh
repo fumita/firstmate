@@ -265,18 +265,21 @@ fm_send_id_from_meta() { # <meta-file>
 # text. Classifying that as pending input is correct - the text really is
 # unsubmitted - but leaving it there means the NEXT steer types onto the end of
 # it and submits both as one garbled message. Ctrl-U clears the composer
-# (verified), so the interrupt is not complete until it has been sent. A failed
+# (verified), so the interrupt is not complete until it has been sent. devin's
+# clear is a delayed closing Escape for its revert picker (see the table). A failed
 # clear is loud rather than silent, because the alternative is a corrupted steer.
 # WHICH adapters need that clear, and which key clears them, comes from the one
 # control-plane capability table (bin/fm-control-lib.sh) rather than a second
 # copy here - the same table bin/fm-control.sh's interrupt verb reads.
 fm_send_clear_after_interrupt() { # <key>
-  local key=$1 family clear
+  local key=$1 family clear delay
   [ "$key" = Escape ] || return 0
   family=$(fm_control_harness_family "$TARGET_HARNESS") || return 0
   clear=$(fm_control_interrupt_clear_key "$family") || return 0
   [ -n "$clear" ] || return 0
   [ "$TARGET_BACKEND" != remote ] || return 0
+  delay=$(fm_control_interrupt_clear_delay "$family") || delay=0
+  [ "$delay" = 0 ] || sleep "$delay"
   if ! fm_backend_send_key "$TARGET_BACKEND" "$T" "$clear" "$EXPECTED_LABEL"; then
     echo "error: Escape reached $T, but the $TARGET_HARNESS composer could not be cleared; it still holds the restored prompt. Clear it before sending the next message." >&2
     return 1

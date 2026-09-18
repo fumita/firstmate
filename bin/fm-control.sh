@@ -357,10 +357,11 @@ require_state_verified_backend() {  # <verb>
 # an interrupt that cancels the turn but leaves the restored prompt in the
 # composer would make the next submitted line concatenate onto it.
 send_interrupt_keys() {
-  local key repeat clear i=0
+  local key repeat clear delay i=0
   key=$(fm_control_interrupt_key "$HARNESS")
   repeat=$(fm_control_interrupt_repeat "$HARNESS")
   clear=$(fm_control_interrupt_clear_key "$HARNESS")
+  delay=$(fm_control_interrupt_clear_delay "$HARNESS")
   fm_control_backend_supports_key "$BACKEND" "$key" \
     || die "harness $HARNESS interrupts with $key, which the $BACKEND backend cannot deliver; refusing to send a different key"
   [ -z "$clear" ] || fm_control_backend_supports_key "$BACKEND" "$clear" \
@@ -371,6 +372,7 @@ send_interrupt_keys() {
     i=$((i + 1))
     [ "$i" -ge "$repeat" ] || sleep 0.2
   done
+  [ -z "$clear" ] || [ "$delay" = 0 ] || sleep "$delay"
   [ -z "$clear" ] || fm_backend_send_key "$BACKEND" "$T" "$clear" "$LABEL" \
     || die "interrupt key $key reached task $ID, but $clear did not, so its composer still holds the cancelled prompt; clear it before the next lifecycle action"
 }

@@ -168,6 +168,10 @@ The crewmate/scout-only Rovo CLI 202609.1.2 adapter added `*rovo*` to the same g
 `#{pane_current_command}` reported the truncated on-disk binary name `atlassian_cli_r` - macOS's 15-char `comm` truncation cuts `atlassian_cli_rovodev` off just before the `rovo` substring begins, the same truncation-volatility class codex/kimi's own patch-release name drift shows above - while the foreground ps-based `comm` correctly reported `rovo`, so `fm_backend_tmux_agent_state` returned `alive` through that primary source; the two-independent-name-sources design is exactly why the truncated title does not break the verdict.
 [`rovo.md`](rovo.md#backend-liveness-tmux-verified-live-herdr-placement-verified-live-with-a-herdr-side-agent-detection-gap) owns the fuller record, including the busy/interrupt/exit facts captured in that same live tmux session and the herdr agent-detection gap found when herdr placement was verified live in an isolated lab session.
 
+The crewmate/scout-only Devin CLI 3000.10.31 adapter added the anchored name `devin` to the shared process-name classifier on 2026-09-18 on Linux under WSL2.
+Under a private tmux server `#{pane_current_command}` and `ps -o comm=` both reported `devin` for the TUI, and its `devin acp` tool host also runs as `comm=devin`, while `devinfo` stays `other` in the portable regression; under Herdr 0.9.1 `agent get` reported `agent=devin` natively.
+[`devin.md`](devin.md) owns the fuller record, including the supervised Herdr-lab task and `tests/fm-devin-signals-live-e2e.test.sh`, the prompt-submitting live guard that refreshes it.
+
 Bounded observed output:
 
 ```text

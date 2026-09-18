@@ -46,6 +46,10 @@ fm_agent_process_classify_name() {  # <path> [argv0] -> agent|shell|other
     # single binary, comm=agy with argv[0]=agy), and a glob would claim
     # unrelated commands containing that fragment.
     agy) printf 'agent' ;;
+    # devin (Devin CLI) is anchored for the same reason: a static single binary
+    # whose TUI and its `devin acp` tool host both run as comm=devin (verified,
+    # devin 3000.10.31), and a glob would claim unrelated names such as devinfo.
+    devin) printf 'agent' ;;
     zsh|bash|sh|dash|ash|ksh|mksh|tcsh|csh|fish) printf 'shell' ;;
     *)
       if fm_harness_path_name "$path" >/dev/null || fm_harness_path_name "$argv0" >/dev/null; then

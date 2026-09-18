@@ -135,7 +135,7 @@
 #   profile consultation. A --secondmate spawn is exempt and resolves the SECONDMATE
 #   harness (config/secondmate-harness -> config/crew-harness -> own), so the
 #   secondmate-vs-crewmate split is DURABLE across every respawn (recovery,
-#   /updatefirstmate, restart). A bare adapter name (claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy)
+#   /updatefirstmate, restart). A bare adapter name (claude|codex|opencode|pi|pi-signed|grok|kimi|cursor|gemini|muse|rovo|omp|agy|devin)
 #   overrides it for this spawn (either kind). A non-flag string containing
 #   whitespace is treated as a RAW launch command - the escape hatch for verifying
 #   new adapters. For pi and pi-signed, fm-spawn resolves the selected executable
@@ -284,6 +284,7 @@
 #     __GEMINISETTINGS__ firstmate-owned per-task gemini settings file (busy-state hooks)
 #     __ROVOBIN__   resolved, rovo-verified executable for a rovo launch
 #     __AGYBIN__    resolved, agy-verified executable for an agy launch
+#     __DEVINBIN__  resolved, devin-verified executable for a devin launch
 # Verified per-harness turn-end hooks are installed automatically where enabled; some live outside the worktree.
 # Kimi uses one surgically installed Firstmate region in $HOME/.kimi-code/config.toml,
 # a firstmate-owned global hook and registry, and a gitignored per-task pointer.
@@ -300,7 +301,7 @@
 # plus a gitignored .fm-grok-turnend worktree pointer and a state token.
 # muse installs no hook at all - its plugin engine is off in the default build - so
 # it writes state/<id>.muse-session to bind the pane to muse's own session event
-# log; muse, gemini, and agy are crewmate/scout only and are refused for --secondmate.
+# log; muse, gemini, agy, and devin are crewmate/scout only and are refused for --secondmate.
 # rovo installs no hook either - its eventHooks fire at tool granularity only,
 # never turn-end - so it carries no busy-source wiring at all and no turn-end
 # hook. A positional brief is dead-on-arrival (rovo loads, never works, and drops
@@ -316,6 +317,9 @@
 # busy turn - answering the dialog first if it renders anyway - before
 # reporting success (the rovo/kimi launch-then-confirm shape). Its busy state
 # is a screen-scrape fallback like grok and rovo, and it is crewmate/scout only.
+# devin takes the claude shape: its busy-state hooks are written into the
+# worktree's .devin/config.local.json (devin's own uncommitted project layer),
+# kept out of git's view, and the spawn refuses a project that tracks that path.
 # cursor installs no per-task hook either: it writes state/<id>.cursor-session to
 # bind the pane to cursor's own conversation transcript (projects root, the exact
 # workspace path cursor records in .workspace-trusted, and the conversations that
@@ -1536,7 +1540,7 @@ if [ "$RELAUNCH" -eq 1 ]; then
   }
 elif [ "$KIND" = secondmate ]; then
   case "${POS[1]:-}" in
-  '' | claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy)
+  '' | claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin)
     ARG3=${POS[1]:-}
     ;;
   *' '*)
@@ -1642,6 +1646,41 @@ agy_model_validate() {  # <agy-bin> <model>
     return 0
   fi
   echo "error: agy model '$model' is not listed by 'agy models'; choose a listed id or omit --model" >&2
+  return 1
+}
+
+# devin pre-launch model validation. `devin models list --format json` (devin
+# 3000.10.31) lists the account's catalog as families, each with a family_uid,
+# a slug, aliases, and variants carrying a model_uid; --model accepts any of
+# them (claude-opus-5-high, claude-opus-5, opus). Effort is part of the variant
+# id, never a separate flag. A launch with an unlisted id exits at once with
+# `Unknown model`, so a requested id absent from a reachable listing refuses the
+# spawn here instead of leaving a dead pane. The listing is a remote fetch, so it
+# runs stdin-detached under the shared hard bound, and an unreachable or
+# unparsable listing launches unvalidated with a notice.
+devin_model_validate() {  # <devin-bin> <model>
+  local bin=$1 model=$2 listing ids rc=0 bound=${FM_DEVIN_MODELS_TIMEOUT:-15}
+  case "$bound" in ''|*[!0-9]*|0*) bound=15 ;; esac
+  [ -n "$model" ] && [ "$model" != default ] || return 0
+  listing=$(fm_run_timed "$bound" "$bin" models list --format json 2>/dev/null < /dev/null) || rc=$?
+  if [ "$rc" -ne 0 ] || [ -z "$listing" ]; then
+    if [ "$rc" -eq 124 ]; then
+      echo "notice: 'devin models list' did not answer within ${bound}s; launching with --model '$model' unvalidated" >&2
+    else
+      echo "notice: 'devin models list' is unreachable (exit $rc); launching with --model '$model' unvalidated" >&2
+    fi
+    return 0
+  fi
+  if ! command -v jq >/dev/null 2>&1 ||
+    ! ids=$(printf '%s' "$listing" | jq -r '.families[] | .family_uid, .slug, (.aliases[]?), (.variants[]?.model_uid) | select(type == "string")' 2>/dev/null) ||
+    [ -z "$ids" ]; then
+    echo "notice: 'devin models list' output could not be read; launching with --model '$model' unvalidated" >&2
+    return 0
+  fi
+  if printf '%s\n' "$ids" | grep -qxF -- "$model"; then
+    return 0
+  fi
+  echo "error: devin model '$model' is not listed by 'devin models list'; choose a listed id or omit --model" >&2
   return 1
 }
 
@@ -1776,6 +1815,26 @@ launch_template() {
   # agy exposes no hook surface, so busy state is a rendered-tail fallback
   # (bin/fm-busy-lib.sh) and nothing is armed below.
   agy) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS __AGYBIN__ --prompt-interactive "$(__OPINPUT__ encode launch-brief < __BRIEF__)" __MODELFLAG____EFFORTFLAG__--dangerously-skip-permissions' ;;
+  # devin (Devin CLI): the prompt after `--` starts the supervised interactive
+  # session and auto-submits it (verified, devin 3000.10.31). --permission-mode
+  # dangerous auto-approves every tool, which an unattended crewmate needs.
+  # Every task worktree is a fresh path, and devin parks an untrusted one on
+  # `Do you trust the authors of this directory?`; --respect-workspace-trust
+  # false skips that gate for this launch only, writing nothing to devin's
+  # trust store. devin works in its cwd, the worktree, and has no flag that
+  # allocates a second worktree. --model takes a catalog id from `devin models
+  # list`, whose variant ids carry the effort level, so the shared effort axis
+  # has no separate flag and stays in task metadata only. Busy state comes from
+  # the hooks written below into .devin/config.local.json. devin keeps an
+  # inherited CLAUDECODE, so the foreign primary markers are cleared here and
+  # bin/fm-harness.sh identifies the worker by its comm=devin ancestry.
+  # WAYLAND_DISPLAY is cleared too: with it set, an idle devin touches the
+  # Wayland clipboard about a minute into a quiet composer, and on a host whose
+  # compositor refuses that (WSLg) the next submitted prompt fails with
+  # `Io error: Connection reset by peer` and is dropped, which would strand a
+  # worker idling on a steer. Without it the same idle-then-prompt turn runs
+  # (verified live, devin 3000.10.31 on WSL2); X11 DISPLAY is kept.
+  devin) printf '%s' 'env -u CLAUDECODE -u PI_CODING_AGENT -u GROK_AGENT -u FM_PI_HARNESS -u WAYLAND_DISPLAY __DEVINBIN__ --permission-mode dangerous --respect-workspace-trust false __MODELFLAG__-- "$(__OPINPUT__ encode launch-brief < __BRIEF__)"' ;;
   # grok (Grok Build TUI): a positional prompt starts the supervised interactive
   # session. --always-approve auto-approves every tool execution (verified: the
   # crewmate runs fully autonomously, no permission gate), which an unattended
@@ -1942,7 +2001,7 @@ case "$ARG3" in
   ;;
 esac
 
-# muse, gemini, and agy are verified as CREWMATE/SCOUT adapters only. A secondmate is
+# muse, gemini, agy, and devin are verified as CREWMATE/SCOUT adapters only. A secondmate is
 # a firstmate instance, so it needs a primary supervision protocol.
 # gemini has none: docs/supervision-protocols/ carries no gemini wake protocol
 # and this task verified only crewmate-side launch, busy state, interrupt, and
@@ -1954,7 +2013,9 @@ esac
 # secondmate whose supervision cycle could never be armed.
 # agy has none either: it exposes no hook surface for primary supervision and
 # docs/supervision-protocols/ carries no agy wake protocol (agy 1.2.0).
-if [ "$KIND" = secondmate ] && { [ "$HARNESS" = muse ] || [ "$HARNESS" = gemini ] || [ "$HARNESS" = agy ]; }; then
+# devin has hooks, but docs/supervision-protocols/ carries no devin wake
+# protocol and only the crewmate side was verified (devin 3000.10.31).
+if [ "$KIND" = secondmate ] && { [ "$HARNESS" = muse ] || [ "$HARNESS" = gemini ] || [ "$HARNESS" = agy ] || [ "$HARNESS" = devin ]; }; then
   echo "error: $HARNESS is a verified crewmate/scout adapter only and cannot run a secondmate; it has no primary supervision protocol. Select a harness verified for secondmates." >&2
   exit 1
 fi
@@ -2014,6 +2075,12 @@ agy)
     exit 1
   }
   ;;
+devin)
+  DEVIN_BIN=$(resolve_pi_executable devin) || {
+    echo "error: devin executable not found on PATH; install Devin CLI or select a different verified harness" >&2
+    exit 1
+  }
+  ;;
 esac
 
 # config/secondmate-harness may carry optional model/effort tokens alongside the
@@ -2051,6 +2118,9 @@ if [ "$HARNESS" = omp ]; then
 fi
 if [ "$HARNESS" = agy ]; then
   agy_model_validate "$AGY_BIN" "$MODEL" || exit 1
+fi
+if [ "$HARNESS" = devin ]; then
+  devin_model_validate "$DEVIN_BIN" "$MODEL" || exit 1
 fi
 
 secondmate_registry_value() {
@@ -2173,7 +2243,7 @@ model_flag_for_harness() {
   local harness=$1 model=$2
   [ -n "$model" ] && [ "$model" != default ] || return 0
   case "$harness" in
-  claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy)
+  claude | codex | opencode | pi | pi-signed | grok | kimi | cursor | gemini | muse | rovo | omp | agy | devin)
     printf -- '--model %s ' "$(shell_quote "$model")"
     ;;
   esac
@@ -2259,7 +2329,7 @@ effort_flag_for_harness() {
     # launch flag and mapping have not been live-verified; the requested axis
     # stays in task metadata but never reaches the launch command. Cursor encodes
     # effort in model ids such as cursor-grok-4.5-high, so it also receives no
-    # separate effort flag.
+    # separate effort flag, and devin does the same (claude-opus-5-high).
   esac
 }
 
@@ -3773,7 +3843,7 @@ if [ "$KIND" != secondmate ]; then
   # rendered-tail fallbacks and standalone Kimi stays unknown until
   # fm_busy_kimi_verified opens, so none of the three is armed here. Gemini IS
   # armed: its BeforeAgent / AfterAgent / SessionEnd hooks are a verified
-  # open-close pair.
+  # open-close pair, and so is devin with UserPromptSubmit / Stop / SessionEnd.
   BUSY_GEN=
   case "$HARNESS" in
   codex*)
@@ -3784,7 +3854,7 @@ if [ "$KIND" != secondmate ]; then
     ;;
   esac
   case "$HARNESS" in
-  claude* | opencode* | pi | pi-signed | omp)
+  claude* | opencode* | pi | pi-signed | omp | devin)
     BUSY_GEN=$("$FM_ROOT/bin/fm-busy-event.sh" arm "$STATE_REAL" "$ID") || {
       echo "error: failed to arm the busy-state contract for $ID" >&2
       exit 1
@@ -3833,6 +3903,39 @@ if [ "$KIND" != secondmate ]; then
 {"hooks":{"UserPromptSubmit":[{"hooks":[{"type":"command","command":"$j_submit"}]}],"Stop":[{"hooks":[{"type":"command","command":"$j_stop"}]}],"StopFailure":[{"hooks":[{"type":"command","command":"$j_stopfail"}]}],"SessionEnd":[{"hooks":[{"type":"command","command":"$j_sessionend"}]}]}}
 EOF
     exclude_path '.claude/settings.local.json'
+    ;;
+  devin)
+    # Semantic busy-state hooks (bin/fm-busy-lib.sh), the claude shape:
+    # UserPromptSubmit opens a turn, Stop closes a completed one, and
+    # SessionEnd closes on exit. Verified live on devin 3000.10.31: the launch
+    # prompt fires UserPromptSubmit, every completed turn fires Stop, /exit
+    # fires SessionEnd, and a double-Escape interrupt fires NO hook, so like
+    # claude a cancelled turn leaves the record busy until the next turn.
+    # devin validates its hook table as a whole and silently ignores the entire
+    # file when it names any event it does not support (StopFailure,
+    # Notification, SubagentStop, and PreCompact each disabled every hook), so
+    # only those three verified events are written. They go into
+    # .devin/config.local.json, devin's own uncommitted project layer, which
+    # it merges with the captain's user config rather than replacing it (a
+    # --config file replaces the user config and re-runs first-time setup
+    # against another organization, so it is never used). A project that
+    # tracks that path is refused rather than overwritten. Stop keeps the
+    # turn-ended NOTIFICATION touch for the watcher, and every command
+    # tolerates a refused event so a stale-gen writer never breaks devin.
+    if git -C "$WT" ls-files --error-unmatch -- .devin/config.local.json >/dev/null 2>&1; then
+      echo "error: $WT tracks .devin/config.local.json, where firstmate writes devin's per-task busy-state hooks; refusing to overwrite the project's file. Launch this task on another verified harness." >&2
+      exit 1
+    fi
+    mkdir -p "$WT/.devin"
+    busy_cmd_prefix="$(shell_quote "$FM_ROOT/bin/fm-busy-event.sh") apply $(shell_quote "$STATE_REAL") $(shell_quote "$ID")"
+    busy_suffix="--gen $(shell_quote "$BUSY_GEN") --source devin-hook"
+    d_submit=$(json_escape "$busy_cmd_prefix busy $busy_suffix --event user-prompt-submit >/dev/null 2>&1 || true")
+    d_stop=$(json_escape "touch $(shell_quote "$TURNEND"); $busy_cmd_prefix idle $busy_suffix --event stop >/dev/null 2>&1 || true")
+    d_sessionend=$(json_escape "$busy_cmd_prefix idle $busy_suffix --event session-end >/dev/null 2>&1 || true")
+    cat >"$WT/.devin/config.local.json" <<EOF
+{"hooks":{"UserPromptSubmit":[{"hooks":[{"type":"command","command":"$d_submit"}]}],"Stop":[{"hooks":[{"type":"command","command":"$d_stop"}]}],"SessionEnd":[{"hooks":[{"type":"command","command":"$d_sessionend"}]}]}}
+EOF
+    exclude_path '.devin/config.local.json'
     ;;
   gemini)
     if [ "$RAW_LAUNCH" -eq 0 ]; then
@@ -4372,10 +4475,11 @@ cursor) LAUNCH=${LAUNCH//__CURSORBIN__/"$(shell_quote "$CURSOR_BIN")"} ;;
 gemini) LAUNCH=${LAUNCH//__GEMINISETTINGS__/"$(shell_quote "$STATE_REAL/$ID.gemini-settings.json")"} ;;
 omp) LAUNCH=${LAUNCH//__OMPBIN__/"$(shell_quote "$OMP_BIN")"} ;;
 agy) LAUNCH=${LAUNCH//__AGYBIN__/"$(shell_quote "$AGY_BIN")"} ;;
+devin) LAUNCH=${LAUNCH//__DEVINBIN__/"$(shell_quote "$DEVIN_BIN")"} ;;
 esac
 LAUNCH=${LAUNCH//__WORKTREE__/$sq_worktree}
 case "$HARNESS" in
-claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy)
+claude | codex | opencode | pi | pi-signed | grok | kimi | gemini | muse | rovo | agy | devin)
   LAUNCH="env -u CURSOR_AGENT -u CURSOR_INVOKED_AS -u GEMINI_CLI $LAUNCH"
   ;;
 esac
