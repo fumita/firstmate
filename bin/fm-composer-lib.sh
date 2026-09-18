@@ -1576,7 +1576,26 @@ _fm_composer_classify_pi_rows() {  # <screen> <styled>
 }
 
 _fm_composer_classify_bare_pi_overlap() {  # <screen> <styled> <has-identity> <identity> <bare-row>
-  local screen=$1 styled=$2 has_identity=$3 identity=$4 row=$5 agent
+  local screen=$1 styled=$2 has_identity=$3 identity=$4 row=$5 agent opener raw content plain
+  opener=$(_fm_composer_screen_row "$FM_COMPOSER_SCAN_PI_OPEN" "$(printf '%s\n' "$screen" | fm_composer_strip_ansi)")
+  fm_composer_normalize_trim_var opener
+  if [ "$styled" = 1 ] && _fm_composer_titled_rule_row "$opener"; then
+    raw=$(_fm_composer_screen_row "$row" "$screen")
+    content=$(_fm_composer_row_content "$raw" "$styled")
+    plain=$(_fm_composer_row_content "$raw" 0)
+    local body=$content glyph=''
+    if fm_composer_leading_prompt_glyph_var glyph "$body"; then
+      body=${body#*"$glyph"}
+    fi
+    fm_composer_normalize_trim_var body
+    if fm_composer_idle_matches "$body" "${FM_COMPOSER_IDLE_RE:-$FM_COMPOSER_IDLE_RE_DEFAULT}" insensitive; then
+      printf 'empty'
+      return 0
+    fi
+    fm_composer_classify_content 1 "$content" \
+      "${FM_COMPOSER_IDLE_RE:-$FM_COMPOSER_IDLE_RE_DEFAULT}" insensitive "$plain" 1 "$styled"
+    return 0
+  fi
   if [ "$has_identity" != 1 ]; then
     _fm_composer_classify_bare_row "$screen" "$styled" "$row"
     return 0

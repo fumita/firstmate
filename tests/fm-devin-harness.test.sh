@@ -181,6 +181,8 @@ devin_screen() {  # idle|typed
   rule=$(printf '─%.0s' $(seq 1 74))
   if [ "$1" = typed ]; then
     body=$'\e[39m❭ typed words'
+  elif [ "$1" = idle_plain ]; then
+    body='❭ Ask Devin to build features, fix bugs, or work on your code'
   else
     body=$'\e[39m❭ \e[38;2;124;124;124mAsk Devin to build features, fix bugs, or work on your code\e[39m'
   fi
@@ -193,11 +195,14 @@ devin_screen() {  # idle|typed
 }
 
 test_devin_composer_reads_empty_and_pending() {
-  local idle typed got plain_idle
+  local idle typed live_idle got plain_idle
   idle=$(devin_screen idle)
   typed=$(devin_screen typed)
+  live_idle=$(devin_screen idle_plain)
   got=$(fm_composer_classify_screen $'styled=1\ncursor=1' "$idle" 6)
   [ "$got" = empty ] || fail "an idle devin composer under the cursor must read empty, got '$got'"
+  got=$(fm_composer_classify_screen $'styled=1\ncursor=1' "$live_idle" 6)
+  [ "$got" = empty ] || fail "a live uncolored idle devin composer under the cursor must read empty, got '$got'"
   got=$(fm_composer_classify_screen $'styled=1\ncursor=1' "$typed" 6)
   [ "$got" = pending ] || fail "typed devin input under the cursor must read pending, got '$got'"
   got=$(fm_composer_classify_screen styled=1 "$idle")
