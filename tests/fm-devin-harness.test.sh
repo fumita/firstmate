@@ -138,6 +138,25 @@ test_devin_busy_record_is_trusted_only_for_devin() {
   pass "fm-busy-lib: the devin-hook source classifies devin and only devin"
 }
 
+test_devin_prefixed_raw_commands_are_not_devin() {
+  local statedir gen got raw
+  for raw in devin-beta devinfo; do
+    if fm_control_harness_family "$raw" >/dev/null; then
+      fail "raw harness '$raw' must not get devin control mechanics"
+    fi
+  done
+  statedir="$TMP_ROOT/prefix-busy"; mkdir -p "$statedir"
+  gen=$("$ROOT/bin/fm-busy-event.sh" arm "$statedir" dvprefix) || fail "arm failed"
+  "$ROOT/bin/fm-busy-event.sh" apply "$statedir" dvprefix idle --gen "$gen" --source devin-hook --event stop \
+    || fail "a devin-hook event must apply"
+  for raw in devin-beta devinfo; do
+    got=$(fm_busy_classify tmux fake:win "$raw" dvprefix "$statedir")
+    [ "$got" = "unknown source-mismatch" ] \
+      || fail "raw harness '$raw' must not trust devin-hook, got '$got'"
+  done
+  pass "fm-control-lib/fm-busy-lib: devin-prefixed raw commands do not inherit devin"
+}
+
 test_devin_delivery_signature_is_harness_scoped() {
   printf '⠀⠚ Thinking · 4s (esc twice to interrupt)\n' | fm_busy_lines_match devin \
     || fail "devin's busy row must match its own signature"
@@ -450,6 +469,7 @@ test_devin_ancestry_rejects_unrelated_mentions
 test_devin_outranks_inherited_claudecode_and_claims_no_marker
 test_devin_control_mechanics_are_the_verified_ones
 test_devin_busy_record_is_trusted_only_for_devin
+test_devin_prefixed_raw_commands_are_not_devin
 test_devin_delivery_signature_is_harness_scoped
 test_devin_composer_reads_empty_and_pending
 test_devin_tmux_names_the_native_binary_an_agent
