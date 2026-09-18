@@ -129,3 +129,5 @@ FM_DEVIN_SIGNALS_LIVE=1 bin/fm-test-run.sh tests/fm-devin-signals-live-e2e.test.
 ```
 
 The live guard's 2026-09-18 run on `devin 3000.10.31 (b98cc431)` passed all six checks: launch and busy row, ancestry, hook bracketing with an empty idle composer, control interrupt after a 90-second idle, idle interrupt with no picker left open, and exit with `SessionEnd`.
+- The guard was rerun on 2026-09-18 after the exact-name matching and titled-rule placeholder fixes, and again passed all six checks on `devin 3000.10.31 (b98cc431)`.
+- A second supervised Herdr-lab scout on that same code passed spawn, the launch-brief turn, a durable steer after a 30-second idle composer, an interrupt of a running turn, an idle interrupt that left no `Revert to step` picker, exit, and cleanup, and the lab helper again verified the `default` session unchanged.
