@@ -1,0 +1,5 @@
+Command: FM_DEVIN_SIGNALS_LIVE=1 FM_DEVIN_LIVE_MODEL=MODEL_GPT_5_2_LOW FM_DEVIN_LIVE_IDLE_SECS=5 bash tests/fm-devin-signals-live-e2e.test.sh
+
+ok - devin (devin 3000.10.31 (b98cc431)): the launch prompt auto-submits and the busy row matches devin's delivery signature
+ok - devin (devin 3000.10.31 (b98cc431)): ancestry reads the live process as comm devin
+not ok - devin (devin 3000.10.31 (b98cc431)): the idle composer classified 'pending', not empty

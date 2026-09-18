@@ -1,0 +1,14 @@
+ok - fm-harness.sh: ancestry detects the devin TUI and its acp tool host
+ok - fm-harness.sh: ancestry rejects unrelated devin mentions
+ok - fm-harness.sh: devin ancestry outranks a retained CLAUDECODE and no variable claims it
+ok - fm-control-lib: devin is Escape twice, a delayed closing Escape, /exit, crewmate/scout only
+ok - fm-busy-lib: the devin-hook source classifies devin and only devin
+ok - fm-control-lib/fm-busy-lib: devin-prefixed raw commands do not inherit devin
+ok - fm-composer-lib: devin delivery signatures never cross harnesses
+ok - fm-composer-lib: devin's composer reads empty or pending on styled reads
+ok - bin/fm-agent-process-lib.sh: devin is an agent, fragments are not
+ok - fm-spawn: devin launch carries brief, model, autonomy, and trust skip, omitting effort
+ok - fm-spawn: devin hooks are the three verified events and drive the busy record
+ok - fm-spawn: devin refuses rather than overwriting a tracked .devin/config.local.json
+ok - fm-spawn: devin refuses an unlisted model and launches past an unreachable listing
+ok - fm-spawn: devin refuses secondmates and a missing executable
