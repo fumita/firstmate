@@ -2523,6 +2523,8 @@ fi
 # first. Publication is eventually consistent by design and every reader
 # re-derives current state from the owning home anyway, while beacon freshness
 # is what the whole supervision chain rests on.
+# shellcheck source=bin/fm-home-summary-refresh-lib.sh disable=SC1091
+. "$SCRIPT_DIR/fm-home-summary-refresh-lib.sh"
 HOME_SUMMARY_PID=
 home_summary_refresh_detached() {
   if [ -n "$HOME_SUMMARY_PID" ]; then
@@ -2532,9 +2534,8 @@ home_summary_refresh_detached() {
     wait "$HOME_SUMMARY_PID" 2>/dev/null || true
     HOME_SUMMARY_PID=
   fi
-  FM_HOME_SUMMARY_IF_IDLE=1 \
-    "$SCRIPT_DIR/fm-home-summary-refresh.sh" --best-effort </dev/null >/dev/null 2>&1 &
-  HOME_SUMMARY_PID=$!
+  fm_home_summary_refresh_on_backlog_write_detached
+  HOME_SUMMARY_PID=$FM_HOME_SUMMARY_REFRESH_LAST_PID
 }
 
 RECONCILE_REQUEST_PID=

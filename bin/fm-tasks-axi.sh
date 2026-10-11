@@ -64,6 +64,8 @@ DATA="${FM_DATA_OVERRIDE:-$FM_HOME/data}"
 . "$SCRIPT_DIR/fm-backlog-transition-lib.sh"
 # shellcheck source=bin/fm-hold-reason-lib.sh disable=SC1091
 . "$SCRIPT_DIR/fm-hold-reason-lib.sh"
+# shellcheck source=bin/fm-home-summary-refresh-lib.sh disable=SC1091
+. "$SCRIPT_DIR/fm-home-summary-refresh-lib.sh"
 
 usage() {
   awk '
@@ -150,5 +152,18 @@ case "${1:-}" in
     tasks-axi ${ARGS[@]+"${ARGS[@]}"} | fm_hold_reason_decode_stream
     exit $?
     ;;
+  ready)
+    exec tasks-axi ${ARGS[@]+"${ARGS[@]}"}
+    ;;
 esac
-exec tasks-axi ${ARGS[@]+"${ARGS[@]}"}
+tasks-axi ${ARGS[@]+"${ARGS[@]}"}
+status=$?
+if [ "$status" -eq 0 ]; then
+  case "${1:-}" in
+    ''|show|view|list|ready) ;;
+    *)
+      fm_home_summary_refresh_on_backlog_write_detached
+      ;;
+  esac
+fi
+exit "$status"
