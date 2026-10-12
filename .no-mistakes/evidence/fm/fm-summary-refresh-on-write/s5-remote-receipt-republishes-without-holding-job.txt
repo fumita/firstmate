@@ -1,0 +1,30 @@
+### parent home=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.8v0gGr (code: run worktree @ HEAD)  remote secondmate home=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.QRIZix  remote code root=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-remote-x.PUisfR/remote-root @ HEAD
+$ (remote) FM_HOME=<remote-home> FM_ROOT_OVERRIDE=<remote-root> <remote-root>/bin/fm-home-summary-refresh.sh   # session-start publication, no backlog yet
+rc=0
+remote ledger: {"valid":false,"reason":"missing structured backlog","invalidity":{"kind":"missing_backlog","ids":[]},"generated_epoch":1791797652}
+$ (remote) hold state/.home-summary-refresh.lock for 25s   # an earlier refresh (e.g. a watcher tick) is still running
+lock held by pid 45224
+$ (parent) FM_HOME=<parent> bin/fm-backlog-handoff.sh ios route-remote   # over the remote job worker
+stored: state/handoff/ios.outbox.md bytes=88
+error: refusing fleet lifecycle from inside a no-mistakes gate worktree (/Users/fumita/.no-mistakes/repos/1a95052471d6.git)
+error: backlog delivery to secondmate ios succeeded, but its receiver wake failed; retry a tracked remote wake with --resume-pending or a later new handoff, and retry a local wake by rerunning its handoff
+warning: remote backlog is durable at ios and its outbox was released; the best-effort receiver wake remains pending for a later resume or handoff
+received: ios moved=1 already=0
+handed off 1 item(s) to remote secondmate ios: route-remote
+rc=0  handoff wall time: 5.44s  (lock still held: yes)
+transport log:
+    18:34:13 ssh-job fm-remote-file.sh
+    18:34:16 ssh-job fm-backlog-receive.sh
+remote backlog:
+    ## In flight
+    
+    ## Queued
+    - [ ] route-remote - Ship the iOS widget (repo: alpha)
+    
+    ## Done
+remote ledger while lock held: {"valid":false,"reason":"missing structured backlog","generated_epoch":1791797652,"queued":[]}
+lock released after 24.56s from handoff start
+(nothing else runs in the remote home from here on)
+remote ledger 2s after lock release: {"valid":true,"state":"no_active_work","reason":null,"invalidity":{"kind":null,"ids":[]},"generated_epoch":1791797678,"queued":["route-remote"]}
+parent ledger file absent or stale is fine here; parent queue now: ## Queued ## Done 
+(stopped lab remote job worker pid 45732)

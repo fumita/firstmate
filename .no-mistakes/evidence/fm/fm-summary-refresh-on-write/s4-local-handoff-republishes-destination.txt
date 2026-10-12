@@ -1,0 +1,32 @@
+### parent home=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.glOaE6 (code: run worktree 11e9675)  secondmate home=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR (its own checkout of 11e9675)
+$ (secondmate) bin/fm-session-start.sh   # no data/backlog.md yet
+rc=0
+secondmate ledger: {"valid":false,"reason":"missing structured backlog","invalidity":{"kind":"missing_backlog","ids":[]}}
+$ (parent) bin/fm-home-summary-refresh.sh
+rc=0
+parent ledger: {"valid":false,"queued":["route-me"]}
+$ (parent) FM_HOME=<parent> bin/fm-backlog-handoff.sh design route-me
+handed off 1 item(s) to design: route-me
+  into /private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR/data/backlog.md
+error: refusing fleet lifecycle from inside a no-mistakes gate worktree (/Users/fumita/.no-mistakes/repos/1a95052471d6.git)
+error: backlog delivery to secondmate design succeeded, but its receiver wake failed; retry a tracked remote wake with --resume-pending or a later new handoff, and retry a local wake by rerunning its handoff
+rc=1
+(neither home runs session start, spawn, teardown, watcher, or a manual refresh from here on)
+$ sleep 12
+secondmate backlog:
+    ## In flight
+    
+    ## Queued
+    - [ ] route-me - Build the alpha importer (repo: alpha)
+      Body line kept with the item.
+    
+    ## Done
+secondmate ledger: {"home":"/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR","valid":true,"state":"no_active_work","reason":null,"invalidity":{"kind":null,"ids":[]},"queued":[{"id":"route-me","title":"Build the alpha importer"}]}
+parent ledger:     {"valid":false,"queued":[]}
+destination refresh entry log (instrumented shim in the secondmate's own bin/):
+    pid=22792 ppid=22424 pcmd=[bash bin/fm-backlog-handoff.sh design route-me] 18:31:58 entry=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR/bin/fm-home-summary-refresh.sh FM_HOME=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR FM_ROOT_OVERRIDE=[] FM_DATA_OVERRIDE=[] FM_STATE_OVERRIDE=[]
+    pid=22873 ppid=22866 pcmd=[bash -c \012    status_file=$1\012    shift\012    "$@"\012    command_rc=$?\012    printf "%s\n" "$command_rc" > "$status_file"\012    exit "$command_rc"\012  ] 18:31:58 entry=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR/bin/fm-home-summary-refresh.sh FM_HOME=/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.0wr4VR FM_ROOT_OVERRIDE=[] FM_DATA_OVERRIDE=[] FM_STATE_OVERRIDE=[]
+$ FM_HOME=<parent> bin/fm-bearings-snapshot.sh
+secondmates[1]{id,state,doing,provenance,freshness,age_seconds,contradiction,reason}:
+  design,no_active_work,No active child work,structured-home,fresh,12,false,"-"
+secondmate_reconcile[1]{id,spawn_gen,host,kind,ids}:

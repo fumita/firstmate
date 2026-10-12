@@ -1,0 +1,13 @@
+### idle secondmate home /private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.tk01eV (own checkout @ 11e9675), no watcher
+$ bin/fm-home-summary-refresh.sh   # a direct, synchronous refresh takes .26s here
+$ hold state/.home-summary-refresh.lock for 15s   # an earlier refresh is still in flight
+$ bin/fm-captain-hold.sh hold cap-late --title "Late captain call" --reason "approve the release date" --repo alpha
+cap-late
+returned after 1.09s
+$ bin/fm-tasks-axi.sh add sm-task-late "Filed while a refresh is running" --repo alpha
+rc=0 returned after .11s
+ledger while lock held: decisions_open=["cap-pick-db","cap-pick-name"] queued=["sm-task-1","cap-pick-db","cap-pick-name"]
+lock released
+ledger 2s after release: {"valid":true,"state":"captain_decision","decisions_open":[{"id":"cap-pick-db","reason":"choose Postgres or SQLite for alpha"},{"id":"cap-pick-name","reason":"approve alpha-core or alpha-kit"},{"id":"cap-late","reason":"approve the release date"}],"queued":["sm-task-1","sm-task-late","cap-pick-db","cap-pick-name","cap-late"]}
+refresh failure log: (none)
+leftover lab refresh processes: 0

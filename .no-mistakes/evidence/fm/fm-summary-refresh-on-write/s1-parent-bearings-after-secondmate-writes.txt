@@ -1,0 +1,45 @@
+schema: fm-bearings.v1
+home: T/fm-lab.tWXFiP
+generated: "2026-10-12T09:20:17Z"
+prs: "not_requested (run: /bearings include PRs)"
+contributions: 
+  scope: owned contributions per home
+  known: 0
+  checked: 0
+  counts: 
+    captain: 0
+    fleet: 0
+    maintainer: 0
+    nobody: 0
+  complete: true
+  proven_clear: true
+  unmeasured_homes: 0
+  unreadable_records: 0
+  unmeasured: 0
+  stale_verdicts: 0
+  missing_verdicts: 0
+  captain_omitted: 0
+  captain: []
+in_flight: []
+secondmates[1]{id,state,doing,provenance,freshness,age_seconds,contradiction,reason}:
+  design,captain_decision,Pick the database engine; Approve the public package name,structured-home,fresh,14,false,"-"
+secondmate_reconcile[1]{id,spawn_gen,host,kind,ids}:
+  design,null,null,null,"[]"
+decisions_open[2]{id,key,verb,summary,owner}:
+  design/cap-pick-db,cap-pick-db,captain-hold,"Pick the database engine: choose Postgres or SQLite for alpha",design
+  design/cap-pick-name,cap-pick-name,captain-hold,"Approve the public package name: approve alpha-core or alpha-kit",design
+landed: []
+gates[2]{id,title,blocked_by,reason,owner,filed}:
+  sm-task-1,Secondmate files its own task,"-","-",design,2026-10-12
+  route-me,work to hand off into the secondmate,"-","-",(main),null
+reports: []
+recorded_prs: []
+unhealthy_endpoints[1]{id,backend,target,exists,agent}:
+  design,tmux,"firstmate:fm-design",false,dead
+omitted[6]{surface,reveal}:
+  backlog item bodies,"--fields bodies"
+  task paths,"--fields paths"
+  watch/steer actions,"--fields actions"
+  healthy endpoint detail,"--fields endpoints"
+  full scout-report inventory,"--all-reports"
+  live PR discovery + checks,"--include-prs"

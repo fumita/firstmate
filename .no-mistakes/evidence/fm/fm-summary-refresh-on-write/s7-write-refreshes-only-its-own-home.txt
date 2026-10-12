@@ -1,0 +1,7 @@
+### parent home /private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.tWXFiP (code: run worktree) with registered secondmate /private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.tk01eV
+before: parent ledger inode= (absent); secondmate ledger inode=18516568
+$ FM_HOME=<parent> bin/fm-tasks-axi.sh add parent-only "Parent-home task" --repo alpha
+rc=0
+after:  parent ledger inode=18524059; secondmate ledger inode=18516568
+parent ledger: {"home":"/private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.tWXFiP","queued":["parent-only","route-me"]}
+secondmate ledger queued (unchanged home): ["sm-task-1","sm-task-late","cap-pick-db","cap-pick-name","cap-late"]

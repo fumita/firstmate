@@ -1,0 +1,7 @@
+ok - backlog mutation through the wrapper republished a stale ledger with the captain hold
+ok - a write that lands while another refresh holds the lock is still published
+ok - read-only calls did not republish the home summary while a mutation did
+ok - edit, close, and delete aliases republish the home summary
+ok - failed backlog mutation left exit status and output unchanged without republishing
+ok - successful mutation returned and released its process group before a slow refresh finished
+exit=0

@@ -1,0 +1,10 @@
+# bash tests/fm-backlog-handoff.test.sh (excerpt: new ledger cases + result)
+ok - a local handoff republishes the sender and destination home ledgers
+ok - a local handoff republishes the destination through its own entrypoint and code root
+ALL TESTS PASSED
+exit=0
+
+# bash tests/fm-remote-backlog-handoff.test.sh (result)
+ok - a cwd .tasks.toml for another backend does not redirect a markdown receipt
+ALL TESTS PASSED
+exit=0

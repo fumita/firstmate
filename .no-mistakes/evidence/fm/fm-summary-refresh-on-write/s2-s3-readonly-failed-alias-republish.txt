@@ -1,0 +1,20 @@
+### secondmate home /private/var/folders/76/35dxqsj137v84fp5x88rx95h0000gn/T/fm-lab.tk01eV (target code 11e9675), idle: no watcher running
+OK         rc=0   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh list
+OK         rc=0   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh show sm-task-1
+OK         rc=0   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh ready
+OK         rc=0   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh            (dashboard)
+OK         rc=0   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh public-followup list --json
+OK         rc=1   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh start no-such-task  (failing mutation)
+    failing mutation output: error: "Task \"no-such-task\" not found in this backlog" code: NOT_FOUND help[1]: Run `tasks-axi list` to see existing tasks 
+OK         rc=1   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-tasks-axi.sh update no-such-task --title x  (failing mutation)
+    failing mutation output: error: "Task \"no-such-task\" not found in this backlog" code: NOT_FOUND help[1]: Run `tasks-axi list` to see existing tasks 
+OK         rc=1   ledger inode 18507418 -> 18507418 (no publication, expected same)  $ bin/fm-captain-hold.sh hold no-such-task --reason x  (failing hold: no --title to create)
+    failing hold output: fm-captain-hold: --title is required to create task no-such-task 
+OK         rc=0   ledger inode 18507418 -> 18507549 (NEW publication, expected new)  $ bin/fm-tasks-axi.sh add alias-g "Alias target G"
+OK         rc=0   ledger inode 18507549 -> 18507584 (NEW publication, expected new)  $ bin/fm-tasks-axi.sh add alias-h "Alias target H"
+OK         rc=0   ledger inode 18507584 -> 18507610 (NEW publication, expected new)  $ bin/fm-tasks-axi.sh edit alias-g --title "Alias G renamed"  (alias of update)
+    ledger now: [{"id":"alias-g","title":"Alias G renamed"}]
+OK         rc=0   ledger inode 18507610 -> 18507636 (NEW publication, expected new)  $ bin/fm-tasks-axi.sh start alias-g
+OK         rc=0   ledger inode 18507636 -> 18507696 (NEW publication, expected new)  $ bin/fm-tasks-axi.sh close alias-g  (alias of done)
+OK         rc=0   ledger inode 18507696 -> 18507731 (NEW publication, expected new)  $ bin/fm-tasks-axi.sh delete alias-h  (alias of rm)
+    ledger now: {"queued":["sm-task-1","cap-pick-db","cap-pick-name"],"landed":["alias-g","alias-e","alias-c","alias-a"]}
