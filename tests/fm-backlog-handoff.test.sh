@@ -1386,7 +1386,7 @@ test_local_handoff_republishes_both_home_ledgers() {
   command -v jq >/dev/null 2>&1 || { echo "skip: jq not found (ledger republication)"; return 0; }
   setup_homes "$home" "$sub"
   mark_firstmate_home "$home"
-  rm -rf "$sub/bin"
+  rm -rf "${sub:?}/bin"
   ln -s "$ROOT/bin" "$sub/bin"
   mkdir -p "$sub/state"
   cat > "$home/data/backlog.md" <<'EOF'

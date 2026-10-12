@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # fm-home-summary-refresh-lib.sh - fire-and-forget home-summary republication helpers.
 #
 # Usage: . bin/fm-home-summary-refresh-lib.sh
