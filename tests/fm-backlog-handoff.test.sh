@@ -1368,8 +1368,55 @@ EOF
   pass "a cwd .tasks.toml for another backend does not redirect a markdown handoff"
 }
 
+wait_for_ledger() { # <home> <max-seconds> <jq-filter>
+  local i=0
+  while [ "$i" -lt "$2" ]; do
+    jq -e "$3" "$1/state/home-summary.json" >/dev/null 2>&1 && return 0
+    sleep 1
+    i=$((i + 1))
+  done
+  return 1
+}
+
+# The destination published missing_backlog before any backlog existed; a local
+# handoff creates and fills that backlog from the parent, so both homes' ledgers
+# must be republished without either home acting on its own.
+test_local_handoff_republishes_both_home_ledgers() {
+  local home="$TMP_ROOT/ledger-main" sub="$TMP_ROOT/ledger-sub" out
+  command -v jq >/dev/null 2>&1 || { echo "skip: jq not found (ledger republication)"; return 0; }
+  setup_homes "$home" "$sub"
+  mark_firstmate_home "$home"
+  mkdir -p "$sub/state"
+  cat > "$home/data/backlog.md" <<'EOF'
+## In flight
+
+## Queued
+- [ ] ledger-item - routed into a home with a stale ledger (repo: alpha)
+
+## Done
+EOF
+  FM_HOME="$home" "$ROOT/bin/fm-home-summary-refresh.sh" >/dev/null \
+    || fail "initial main ledger publication failed"
+  FM_HOME="$sub" "$ROOT/bin/fm-home-summary-refresh.sh" >/dev/null \
+    || fail "initial secondmate ledger publication failed"
+  jq -e 'any(.queued[]; .id == "ledger-item")' "$home/state/home-summary.json" >/dev/null \
+    || fail "main ledger did not list the queued item before handoff"
+  jq -e '.invalidity.kind == "missing_backlog"' "$sub/state/home-summary.json" >/dev/null \
+    || fail "secondmate ledger did not record missing_backlog before handoff"
+
+  out=$(FM_HOME="$home" FM_DATA_OVERRIDE="$home/data" FM_STATE_OVERRIDE="$home/state" \
+    "$ROOT/bin/fm-backlog-handoff.sh" design ledger-item 2>&1) \
+    || fail "local handoff failed: $out"
+  wait_for_ledger "$sub" 30 '.valid == true and any(.queued[]; .id == "ledger-item")' \
+    || fail "secondmate ledger was not republished after the handoff: $(jq -c . "$sub/state/home-summary.json" 2>/dev/null || true)"
+  wait_for_ledger "$home" 30 'all(.queued[]; .id != "ledger-item")' \
+    || fail "main ledger still lists the handed-off item: $(jq -c . "$home/state/home-summary.json" 2>/dev/null || true)"
+  pass "a local handoff republishes the sender and destination home ledgers"
+}
+
 test_handoff_wakes_live_local_receiver
 test_cwd_tasks_toml_does_not_redirect_handoff
+test_local_handoff_republishes_both_home_ledgers
 test_failed_wake_retries_when_the_item_is_already_present
 test_known_receiver_failure_remains_retryable_after_grace
 test_known_failure_restores_retry_after_reconciliation_race

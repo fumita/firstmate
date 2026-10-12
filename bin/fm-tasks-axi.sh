@@ -152,18 +152,18 @@ case "${1:-}" in
     tasks-axi ${ARGS[@]+"${ARGS[@]}"} | fm_hold_reason_decode_stream
     exit $?
     ;;
-  ready)
+  add|create|start|done|reopen|update|rm|block|unblock|hold|unhold|mv|prune|render) ;;
+  public-followup)
+    case "${2:-}" in
+      add|bind-work|supersede-work|work-event|begin-delivery|record-delivery|record-error|waive) ;;
+      *) exec tasks-axi ${ARGS[@]+"${ARGS[@]}"} ;;
+    esac
+    ;;
+  *)
     exec tasks-axi ${ARGS[@]+"${ARGS[@]}"}
     ;;
 esac
 tasks-axi ${ARGS[@]+"${ARGS[@]}"}
 status=$?
-if [ "$status" -eq 0 ]; then
-  case "${1:-}" in
-    ''|show|view|list|ready) ;;
-    *)
-      fm_home_summary_refresh_on_backlog_write_detached
-      ;;
-  esac
-fi
+[ "$status" -ne 0 ] || fm_home_summary_refresh_on_backlog_write_detached
 exit "$status"
