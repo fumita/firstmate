@@ -2,8 +2,10 @@
 #
 # Usage: . bin/fm-home-summary-refresh-lib.sh
 #
-# fm_home_summary_refresh_on_backlog_write_detached republishes state/home-summary.json
-# for the caller's FM_HOME without waiting. The refresh waits its turn on the home's
+# fm_home_summary_refresh_on_backlog_write_detached [<refresh-script>] republishes
+# state/home-summary.json for the caller's FM_HOME without waiting, through
+# <refresh-script> when given (another home's own entrypoint) and this code root's
+# bin/fm-home-summary-refresh.sh otherwise. The refresh waits its turn on the home's
 # refresh lock inside bin/fm-home-summary-refresh.sh rather than skipping when another
 # refresh holds it, so a write that lands while an earlier refresh is running is still
 # published. It runs in its own process group, so a caller whose supervisor waits on
@@ -11,7 +13,7 @@
 fm_home_summary_refresh_on_backlog_write_detached() {
   local script_dir refresh_script monitor_was_on=0
   script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-  refresh_script="$script_dir/fm-home-summary-refresh.sh"
+  refresh_script=${1:-$script_dir/fm-home-summary-refresh.sh}
   if [ "${FM_TEST_SEAM:-}" = 1 ] && [ -n "${FM_TEST_HOME_SUMMARY_REFRESH_BIN:-}" ]; then
     refresh_script=$FM_TEST_HOME_SUMMARY_REFRESH_BIN
   fi

@@ -24,7 +24,8 @@
 # fallback, and the command exits zero. Session start, watcher, spawn, teardown,
 # and detached republication after a successful backlog mutation (through
 # bin/fm-tasks-axi.sh, bin/fm-captain-hold.sh, bin/fm-backlog-receive.sh, or
-# bin/fm-backlog-handoff.sh, which also republishes a local destination home)
+# bin/fm-backlog-handoff.sh, which also republishes a local destination home
+# through that home's own copy of this script)
 # use that mode so this side-band publication can never change their result.
 # Without it, failures are printed and returned to the direct caller for tests
 # and diagnostics.

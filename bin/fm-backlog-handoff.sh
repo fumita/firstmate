@@ -1091,8 +1091,9 @@ if ! MV_OUT=$(tasks-axi mv "${TO_MOVE[@]}" --file "$MAIN_BACKLOG" --to "$SUB_BAC
   exit 1
 fi
 fm_home_summary_refresh_on_backlog_write_detached
-FM_HOME="$SUB_HOME" FM_DATA_OVERRIDE='' FM_STATE_OVERRIDE='' FM_CONFIG_OVERRIDE='' FM_PROJECTS_OVERRIDE='' \
-  fm_home_summary_refresh_on_backlog_write_detached
+FM_HOME="$SUB_HOME" FM_ROOT_OVERRIDE='' FM_DATA_OVERRIDE='' FM_STATE_OVERRIDE='' \
+  FM_CONFIG_OVERRIDE='' FM_PROJECTS_OVERRIDE='' \
+  fm_home_summary_refresh_on_backlog_write_detached "$SUB_HOME/bin/fm-home-summary-refresh.sh"
 
 echo "handed off ${#TO_MOVE[@]} item(s) to $ID: ${TO_MOVE[*]}"
 echo "  into $SUB_BACKLOG"

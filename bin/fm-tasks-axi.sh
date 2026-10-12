@@ -152,7 +152,7 @@ case "${1:-}" in
     tasks-axi ${ARGS[@]+"${ARGS[@]}"} | fm_hold_reason_decode_stream
     exit $?
     ;;
-  add|create|start|done|reopen|update|rm|block|unblock|hold|unhold|mv|prune|render) ;;
+  add|create|start|done|close|reopen|update|edit|rm|delete|block|unblock|hold|unhold|mv|prune|render) ;;
   public-followup)
     case "${2:-}" in
       add|bind-work|supersede-work|work-event|begin-delivery|record-delivery|record-error|waive) ;;

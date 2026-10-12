@@ -148,6 +148,28 @@ test_read_only_calls_do_not_republish() {
   pass "read-only calls did not republish the home summary while a mutation did"
 }
 
+expect_republish() {  # <home> <fake> <marker> <args...>
+  local home=$1 fake=$2 marker=$3
+  shift 3
+  rm -f "$marker"
+  FM_TEST_HOME_SUMMARY_REFRESH_BIN="$fake" run_wrapper "$home" "$@" >/dev/null || fail "$* failed"
+  wait_for_file "$marker" 50 || fail "'$*' rewrote the backlog without republishing the home summary"
+}
+
+test_mutating_aliases_republish() {
+  local home marker fake
+  home=$(make_home aliases)
+  empty_backlog "$home/data/backlog.md"
+  marker="$home/state/refresh-invocations"
+  fake=$(make_recording_refresh aliases-refresh "$marker" 0)
+  expect_republish "$home" "$fake" "$marker" add alias-1 "first"
+  expect_republish "$home" "$fake" "$marker" add alias-2 "second"
+  expect_republish "$home" "$fake" "$marker" edit alias-1 --title "renamed"
+  expect_republish "$home" "$fake" "$marker" close alias-1
+  expect_republish "$home" "$fake" "$marker" delete alias-2
+  pass "edit, close, and delete aliases republish the home summary"
+}
+
 test_failed_mutation_leaves_output_and_status() {
   local home out rc marker fake
   home=$(make_home failed-mutation)
@@ -194,5 +216,6 @@ test_slow_refresh_does_not_hold_wrapper_or_its_group() {
 test_stale_ledger_republishes_after_backlog_hold
 test_write_during_running_refresh_is_published
 test_read_only_calls_do_not_republish
+test_mutating_aliases_republish
 test_failed_mutation_leaves_output_and_status
 test_slow_refresh_does_not_hold_wrapper_or_its_group
